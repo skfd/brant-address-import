@@ -1,0 +1,134 @@
+[city]
+slug = "brant"
+name = "Brant County"
+# Ward Boundaries: 5 polygons on the county's AGO org, point-tested 2026-08-16
+# per 04-city-onboarding.md at 99.98% of the 18,097 numbered snapshot-61 rows
+# (3 orphans). The Quinte West pattern repeated exactly: the settlement fabric
+# that LOOKS like the planning layer (SettlementBoundaries, 26 polygons;
+# Settlement_Boundary_view, 22) point-tests at only ~72.5% — a built-up-area
+# fabric that excludes rural roads — while the unglamorous ward layer wins.
+# Name field is WARD, an INTEGER 1-5 (tile names will render as bare numbers;
+# same watch-the-UI note as Guelph's int ward). Subdivision_view (214 dev-plan
+# polygons) is a construction-phase fabric, not a residency fabric — not
+# probed for coverage. County_of_Brant_Boundary_OpenData_view (1 polygon) is
+# the future 10-boundary-clipping.md input, noted so it isn't re-discovered.
+neighbourhoods_url = "https://services1.arcgis.com/ZG34JIhRAfwP1ItJ/arcgis/rest/services/Ward_Boundaries_OpenData_view/FeatureServer/0/query?where=1%3D1&outFields=WARD&outSR=4326&f=geojson"
+neighbourhood_name_field = "WARD"
+
+[source]
+sqlite_path = "C:/Users/kk/Code/ontario-address-changes/data/brant/brant.db"
+# Tracker is FRESH here (snapshot 61, 2026-08-15; daily pulls, stable at
+# 19,333 rows) — brant is not part of the 2026-06-27..29 stall cluster.
+
+# Per-city projection recipe (multi-city Tier 2), measured against snapshot 61
+# (2026-08-15, 19,333 rows; no stable key — synthetic identities).
+[source_fields]
+# FULL_ADDRESS's first whitespace token IS number+alpha fused ("17A", "331/2")
+# — verified 2026-08-16 on all 18,097 numbered rows (1 exception: a spaced
+# "379 1/2 HIGHWAY 2", which becomes a QA find). The tracker's number column
+# (STREET_NUMBER) DROPS the 219 STREET_NUMBER_ALPHA qualifiers, so the
+# housenumber comes from full's leading token (the Waterloo branch, second
+# consumer) and keeps them. The 11 fused "1/2" values ("331/2") arguably want
+# a space — an upload-path QA note, not a conflation problem.
+number_from = "full"
+# STREET_NAME is the bare name ("WILLOW"); FULL_ADDRESS is the long form
+# ("219 GRAND RIVER STREET NORTH"), so the street derives from full by
+# number-length stripping (the Barrie branch). With number_from = "full" the
+# strip length equals the leading token by construction — the alpha rows
+# strip clean.
+street_from = "full"
+full_from = "full"
+# ALL-CAPS source (first-token check 2026-08-16) — conflation is
+# case-insensitive, but TODO §9's title-case export step gates any upload,
+# same as Quinte West.
+#
+# NUMBER-LESS ROWS (TODO §8, second consumer, worse than Quinte West's 342):
+# 1,236 of 19,333 rows have no STREET_NUMBER — 331 are street-only stubs
+# ("PARKSIDE DRIVE", where number_from="full" projects the street's first
+# word as the number) and 905 are pure coordinate points with NO address
+# fields at all (props carry only type/place/province). Until §8 lands, any
+# baseline's MISSING count includes this junk — read baselines minus ~1,236.
+#
+# PLACE_NAME is former-township trivia, not a jurisdiction: single-tier
+# county, values are inconsistent variants ("FORMER TOWNSHIP OF ONONDAGA" vs
+# "... ONONDAGA TOWNSHIP" vs "ONONDAGA"), 22 nulls. Declared for review
+# display only; adds nothing to dedup keying (the Guelph rationale). NOT a
+# candidate for addr:city — see [export] notes.
+municipality = "props:PLACE_NAME"
+# Tracker canonical column (source STREET_UNIT_NUMBER), 1,460 rows (7.6%).
+# Declaring it obliges the [units] policy below.
+unit = "unit"
+# No status field: CIVIC_ADDRESS_TYPE (PRIMARY 18,557 / SECONDARY 711 /
+# TERTIARY 47) is a structure-role taxonomy, not a lifecycle — SECONDARY rows
+# carry their own real civic numbers. No lo_num/hi_num ranges, no class
+# (verified against snapshot-61 props, 12 keys, 2026-08-16). suffix_range
+# stays undeclared below.
+
+# Measured 2026-08-16 on snapshot 61: the numbered 18,097 rows collapse to
+# 18,082 civic groups keyed (number+alpha, street) — 15 stacked pairs, ALL of
+# them unit-less duplicates (intra-source dupes worth a look during review,
+# e.g. 116 WILLOW STREET twice). Unit rows do NOT stack: each of the 1,460 is
+# the only row at its civic key (no separate base row — unlike Hamilton's
+# parcel stacks and Guelph's apartments). Collapse is therefore a near-no-op
+# declared for consistency and to keep the unit-attribute path deferred.
+[units]
+policy = "collapse-to-civic"
+
+[run_defaults]
+# Dense Paris cell (759 numbered rows) for first test runs.
+bbox = [43.186, -80.396, 43.198, -80.384]
+overpass_url = "https://overpass-api.de/api/interpreter"
+
+[osm]
+source = "local"
+# Same Ontario PBF as every city in the portfolio.
+pbf_url = "https://download.geofabrik.de/north-america/canada/ontario-latest.osm.pbf"
+# Source-data extent (19,333 rows measured 2026-08-16: lat 42.98678..43.30599,
+# lon -80.60754..-79.98518) plus a small margin. THE CITY OF BRANTFORD IS A
+# DONUT HOLE in this rectangle: a separated city surrounded by the county,
+# with its own dataset (brantford, next in the queue) — the bbox inevitably
+# catches all ~39k Brantford addresses on the OSM side. The county boundary
+# layer noted under [city] is the 10-boundary-clipping.md input that fixes
+# this properly; until then read OSM-side extras accordingly.
+city_bbox = [42.97, -80.62, 43.32, -79.97]
+extract_dir = "data/osm"
+
+[conflation]
+match_radius_m = 100
+match_near_m = 15
+
+[checks]
+match_far = true
+# suffix_range deliberately absent: no lo_num/hi_num in this source.
+city_duplicate = true
+missing_sample = true
+nearby_street_mismatch = true
+
+[check_params.city_duplicate]
+radius_m = 3.0
+
+[check_params.missing_sample]
+every_nth = 50
+
+[check_params.nearby_street_mismatch]
+radius_m = 20.0
+
+[check_params.match_number_drift]
+slack_m = 2.0
+
+[upload]
+changesets_per_minute = 1
+changeset_comment_template = "{city} Open Data address import, run={run_name}"
+
+[export]
+attribution = "County of Brant Open Data (CC0)"
+# Onboarding only — no proposal exists. Entry state 2026-08-16: greenfield
+# (CanVec seed). addr:city NOTE for any eventual upload: the 2013 CanVec
+# import wrote addr:city="County of Brant" (577 of 586 tagged samples), NOT
+# settlement names — and the source's PLACE_NAME is unusable former-township
+# trivia. Honouring the existing convention means the constant county name;
+# switching to settlement names (Paris, St George, Burford) would need the
+# settlement polygon fabric (72% coverage) plus a rural fallback, and a
+# community conversation first. The addr:city generalization is TODO §2's
+# re-generalized machinery either way.
+import_plan = ""
