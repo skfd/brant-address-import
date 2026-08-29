@@ -30,7 +30,8 @@ PLACE_NAME field is former-township trivia, not a jurisdiction; **1,236 rows
 carry no housenumber** (905 of them no address fields at all) — TODO §8's
 number-less-rows policy, second consumer; the housenumber comes from
 FULL_ADDRESS's leading token to keep the 219 alpha qualifiers ("17A") the
-tracker's number column drops; ALL-CAPS street names (TODO §9 gates upload);
+tracker's number column drops; ALL-CAPS street names (title-cased on export since
+2026-08-29, `[export] street_case`);
 **the City of Brantford is a donut hole** in the bbox with its own dataset;
 and tiles ride the 5-polygon ward layer (99.98% point-test) after the
 settlement fabric repeated Quinte West's 72%-coverage trap.

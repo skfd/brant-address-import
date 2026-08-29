@@ -39,8 +39,8 @@ number_from = "full"
 street_from = "full"
 full_from = "full"
 # ALL-CAPS source (first-token check 2026-08-16) — conflation is
-# case-insensitive, but TODO §9's title-case export step gates any upload,
-# same as Quinte West.
+# case-insensitive, and the upload is handled by [export] street_case below
+# (2026-08-29), same as Quinte West.
 #
 # NUMBER-LESS ROWS (TODO §8, second consumer, worse than Quinte West's 342):
 # 1,236 of 19,333 rows have no STREET_NUMBER — 331 are street-only stubs
@@ -132,3 +132,12 @@ attribution = "County of Brant Open Data (CC0)"
 # community conversation first. The addr:city generalization is TODO §2's
 # re-generalized machinery either way.
 import_plan = ""
+
+# The source shouts: "GRAND RIVER STREET NORTH", "GOVERNOR'S ROAD". Title-cased
+# on the export path only, so street_raw keeps the source's spelling and
+# conflation is untouched. Swept over all 1,760 distinct street names
+# 2026-08-29 — no all-caps word survives. Note "MACNAB"/"MACPHERSON" come out
+# "Macnab"/"Macpherson": Mac is deliberately left alone (OSM spells it both
+# ways), so if the ones on the ground here carry a capital, put them in
+# [streets] overrides rather than expecting the caser to guess.
+street_case = "title"
