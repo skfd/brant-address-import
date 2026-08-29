@@ -42,6 +42,14 @@ full_from = "full"
 # case-insensitive, and the upload is handled by [export] street_case below
 # (2026-08-29), same as Quinte West.
 #
+# Found while sweeping the streets for that pass, and NOT a casing problem:
+# 1,464 of the 18,253 distinct FULL_ADDRESS values carry a parenthesised unit
+# tail ("1 HARTLEY AVENUE (Unit: A1)", "GOVERNOR'S ROAD (Unit: n/s)"), which
+# number-length stripping leaves welded to the derived street. Sarnia's welded
+# " Unit <n>" tail in miniature, and the same open question — a tail-pattern
+# extractor, decided with 09's deferred half. It would reach addr:street as
+# written, so it gates an upload here the way casing used to.
+#
 # NUMBER-LESS ROWS (TODO §8, second consumer, worse than Quinte West's 342):
 # 1,236 of 19,333 rows have no STREET_NUMBER — 331 are street-only stubs
 # ("PARKSIDE DRIVE", where number_from="full" projects the street's first
